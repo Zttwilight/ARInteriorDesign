@@ -75,7 +75,7 @@ public class ImageTrackingManager : MonoBehaviour
         }
     }
 
-    // 更新文字位置
+    //更新文字位置
     private void UpdateTextPosition(ARTrackedImage trackedImage)
     {
         if (spawnedTextObjects.ContainsKey(trackedImage.referenceImage.name))
@@ -97,6 +97,10 @@ public class ImageTrackingManager : MonoBehaviour
             descriptionText.transform.LookAt(2 * descriptionText.transform.position - cameraPosition);
         }
     }
+
+
+
+
 
     // 设置文字可见性
     private void SetTextVisibility(string imageName, bool isVisible)
