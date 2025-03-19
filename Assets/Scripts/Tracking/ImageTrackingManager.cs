@@ -11,9 +11,11 @@ public class ImageTrackingManager : MonoBehaviour
     [SerializeField] private GameObject descriptionPrefab;
 
     private Dictionary<string, (GameObject title, GameObject description)> spawnedTextObjects = new Dictionary<string, (GameObject, GameObject)>();
+    private Dictionary<string, GameObject> spawnedModelObjects = new Dictionary<string, GameObject>(); // 3D 模型管理
 
     private float fixedDistance = 0.5f; // 文字距离摄像头的固定距离（0.5 米）
     private float textSpacing = 0.1f; // 标题和正文之间的间距
+    private float modelHeightOffset = 0.1f; // 3D 模型离图片的高度
 
     void OnEnable()
     {
@@ -29,7 +31,7 @@ public class ImageTrackingManager : MonoBehaviour
     {
         foreach (var trackedImage in eventArgs.added)
         {
-            SpawnText(trackedImage);
+            SpawnObject(trackedImage);
         }
 
         foreach (var trackedImage in eventArgs.updated)
@@ -37,24 +39,44 @@ public class ImageTrackingManager : MonoBehaviour
             if (trackedImage.trackingState == TrackingState.Tracking)
             {
                 UpdateTextPosition(trackedImage);
-                SetTextVisibility(trackedImage.referenceImage.name, true);
+                SetObjectVisibility(trackedImage.referenceImage.name, true);
             }
             else
             {
-                SetTextVisibility(trackedImage.referenceImage.name, false);
+                SetObjectVisibility(trackedImage.referenceImage.name, false);
             }
         }
 
         foreach (var trackedImage in eventArgs.removed)
         {
-            RemoveText(trackedImage);
+            RemoveObject(trackedImage);
         }
     }
 
-    // 生成文字对象（标题 + 正文）
-    private void SpawnText(ARTrackedImage trackedImage)
+    // **生成 3D 模型或文字**
+    private void SpawnObject(ARTrackedImage trackedImage)
     {
-        if (!spawnedTextObjects.ContainsKey(trackedImage.referenceImage.name))
+        string imageName = trackedImage.referenceImage.name;
+
+        if (IsModelTarget(imageName)) // 如果图片需要显示 3D 模型
+        {
+            if (!spawnedModelObjects.ContainsKey(imageName))
+            {
+                GameObject modelPrefab = LoadModelFromResources(imageName);
+                if (modelPrefab != null)
+                {
+                    GameObject modelInstance = Instantiate(modelPrefab);
+                    modelInstance.transform.position = trackedImage.transform.position + new Vector3(0, modelHeightOffset, 0); // 生成在图片上方
+                    modelInstance.transform.localScale = Vector3.one * 0.2f; // 调整大小
+                    modelInstance.transform.rotation = Quaternion.identity; // 使其水平
+
+                    spawnedModelObjects[imageName] = modelInstance;
+                }
+            }
+        }
+        else // 否则显示文字
+        {
+            if (!spawnedTextObjects.ContainsKey(imageName))
         {
             // 创建标题
             GameObject titleText = Instantiate(titlePrefab);
@@ -73,37 +95,41 @@ public class ImageTrackingManager : MonoBehaviour
             titleText.SetActive(false);
             descriptionText.SetActive(false);
         }
-    }
-
-    //更新文字位置
-    private void UpdateTextPosition(ARTrackedImage trackedImage)
-    {
-        if (spawnedTextObjects.ContainsKey(trackedImage.referenceImage.name))
-        {
-            (GameObject titleText, GameObject descriptionText) = spawnedTextObjects[trackedImage.referenceImage.name];
-
-            Vector3 cameraPosition = Camera.main.transform.position;
-            Vector3 directionToCamera = (cameraPosition - trackedImage.transform.position).normalized;
-            Vector3 basePosition = cameraPosition - directionToCamera * fixedDistance;
-
-            // 标题位置
-            titleText.transform.position = basePosition;
-
-            // 正文位置（在标题下面）
-            descriptionText.transform.position = basePosition - new Vector3(0, textSpacing, 0);
-
-            // 让文字始终面向摄像头
-            titleText.transform.LookAt(2 * titleText.transform.position - cameraPosition);
-            descriptionText.transform.LookAt(2 * descriptionText.transform.position - cameraPosition);
         }
     }
 
+    // **更新文字或 3D 模型的位置**
+    private void UpdateTextPosition(ARTrackedImage trackedImage)
+    {
+        string imageName = trackedImage.referenceImage.name;
 
+        if (spawnedTextObjects.ContainsKey(imageName))
+        {
+            (GameObject titleText, GameObject descriptionText) = spawnedTextObjects[imageName];
 
+            Vector3 cameraPosition = Camera.main.transform.position;
+            Vector3 directionToCamera = (trackedImage.transform.position - cameraPosition).normalized;
+            Vector3 basePosition = trackedImage.transform.position;
 
+            // 标题位置
+            titleText.transform.position = basePosition + new Vector3(0, 0.05f, 0);
+            descriptionText.transform.position = basePosition - new Vector3(0, 0.05f, 0);
 
-    // 设置文字可见性
-    private void SetTextVisibility(string imageName, bool isVisible)
+            // 让文字始终正对摄像头
+            titleText.transform.rotation = Quaternion.LookRotation(directionToCamera);
+            descriptionText.transform.rotation = Quaternion.LookRotation(directionToCamera);
+        }
+
+        if (spawnedModelObjects.ContainsKey(imageName))
+        {
+            GameObject model = spawnedModelObjects[imageName];
+            model.transform.position = trackedImage.transform.position + new Vector3(0, modelHeightOffset, 0);
+            model.transform.rotation = Quaternion.identity; // 使模型保持水平
+        }
+    }
+
+    // **设置可见性**
+    private void SetObjectVisibility(string imageName, bool isVisible)
     {
         if (spawnedTextObjects.ContainsKey(imageName))
         {
@@ -111,22 +137,46 @@ public class ImageTrackingManager : MonoBehaviour
             titleText.SetActive(isVisible);
             descriptionText.SetActive(isVisible);
         }
-    }
 
-    // 移除丢失的图片上的文字
-    private void RemoveText(ARTrackedImage trackedImage)
-    {
-        if (spawnedTextObjects.ContainsKey(trackedImage.referenceImage.name))
+        if (spawnedModelObjects.ContainsKey(imageName))
         {
-            (GameObject titleText, GameObject descriptionText) = spawnedTextObjects[trackedImage.referenceImage.name];
-
-            Destroy(titleText);
-            Destroy(descriptionText);
-            spawnedTextObjects.Remove(trackedImage.referenceImage.name);
+            spawnedModelObjects[imageName].SetActive(isVisible);
         }
     }
 
-    // 获取不同图片的介绍内容
+    // **移除对象**
+    private void RemoveObject(ARTrackedImage trackedImage)
+    {
+        string imageName = trackedImage.referenceImage.name;
+
+        if (spawnedTextObjects.ContainsKey(imageName))
+        {
+            (GameObject titleText, GameObject descriptionText) = spawnedTextObjects[imageName];
+            Destroy(titleText);
+            Destroy(descriptionText);
+            spawnedTextObjects.Remove(imageName);
+        }
+
+        if (spawnedModelObjects.ContainsKey(imageName))
+        {
+            Destroy(spawnedModelObjects[imageName]);
+            spawnedModelObjects.Remove(imageName);
+        }
+    }
+
+    // **判断是否为 3D 模型目标**
+    private bool IsModelTarget(string imageName)
+    {
+        return imageName == "evir1" || imageName == "evir2";
+    }
+
+    // **从 Resources 目录动态加载 3D 模型**
+    private GameObject LoadModelFromResources(string imageName)
+    {
+        return Resources.Load<GameObject>("Models/" + imageName);
+    }
+
+    // **获取文字描述**
     private string GetDescription(string imageName)
     {
         switch (imageName)
