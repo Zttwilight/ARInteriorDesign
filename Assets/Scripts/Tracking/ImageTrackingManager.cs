@@ -7,10 +7,13 @@ using UnityEngine.XR.ARSubsystems;
 public class ImageTrackingManager : MonoBehaviour
 {
     [SerializeField] private ARTrackedImageManager _imageManager;
-    [SerializeField] private GameObject textPrefab;
-    private Dictionary<string, GameObject> spawnedTextObjects = new Dictionary<string, GameObject>();
+    [SerializeField] private GameObject titlePrefab;
+    [SerializeField] private GameObject descriptionPrefab;
+
+    private Dictionary<string, (GameObject title, GameObject description)> spawnedTextObjects = new Dictionary<string, (GameObject, GameObject)>();
 
     private float fixedDistance = 0.5f; // 文字距离摄像头的固定距离（0.5 米）
+    private float textSpacing = 0.1f; // 标题和正文之间的间距
 
     void OnEnable()
     {
@@ -48,39 +51,50 @@ public class ImageTrackingManager : MonoBehaviour
         }
     }
 
-    // 生成文字对象（但默认隐藏）
+    // 生成文字对象（标题 + 正文）
     private void SpawnText(ARTrackedImage trackedImage)
     {
         if (!spawnedTextObjects.ContainsKey(trackedImage.referenceImage.name))
         {
-            GameObject newText = Instantiate(textPrefab);
-            newText.GetComponent<TextMeshPro>().text = GetDescription(trackedImage.referenceImage.name);
-            newText.transform.localScale = Vector3.one * 0.05f; // 调整字体大小
-            spawnedTextObjects[trackedImage.referenceImage.name] = newText;
-            newText.SetActive(false); // 默认隐藏，直到图片被识别
+            // 创建标题
+            GameObject titleText = Instantiate(titlePrefab);
+            titleText.GetComponent<TextMeshPro>().text = trackedImage.referenceImage.name; // 直接使用图片名称
+            titleText.transform.localScale = Vector3.one * 0.05f; // 调整字体大小
+
+            // 创建正文
+            GameObject descriptionText = Instantiate(descriptionPrefab);
+            descriptionText.GetComponent<TextMeshPro>().text = GetDescription(trackedImage.referenceImage.name);
+            descriptionText.transform.localScale = Vector3.one * 0.05f;
+
+            // 存入字典
+            spawnedTextObjects[trackedImage.referenceImage.name] = (titleText, descriptionText);
+
+            // 默认隐藏，直到图片被识别
+            titleText.SetActive(false);
+            descriptionText.SetActive(false);
         }
     }
 
-    // 更新文字位置，使其与摄像头保持固定距离
+    // 更新文字位置
     private void UpdateTextPosition(ARTrackedImage trackedImage)
     {
         if (spawnedTextObjects.ContainsKey(trackedImage.referenceImage.name))
         {
-            GameObject textObject = spawnedTextObjects[trackedImage.referenceImage.name];
+            (GameObject titleText, GameObject descriptionText) = spawnedTextObjects[trackedImage.referenceImage.name];
 
-            // 获取摄像头位置
             Vector3 cameraPosition = Camera.main.transform.position;
-
-            // 计算从图片到摄像头的方向
             Vector3 directionToCamera = (cameraPosition - trackedImage.transform.position).normalized;
+            Vector3 basePosition = cameraPosition - directionToCamera * fixedDistance;
 
-            // 让文字始终位于摄像头前 `fixedDistance` 的位置
-            Vector3 newPosition = cameraPosition - directionToCamera * fixedDistance;
+            // 标题位置
+            titleText.transform.position = basePosition;
 
-            textObject.transform.position = newPosition;
+            // 正文位置（在标题下面）
+            descriptionText.transform.position = basePosition - new Vector3(0, textSpacing, 0);
 
             // 让文字始终面向摄像头
-            textObject.transform.LookAt(2 * textObject.transform.position - cameraPosition);
+            titleText.transform.LookAt(2 * titleText.transform.position - cameraPosition);
+            descriptionText.transform.LookAt(2 * descriptionText.transform.position - cameraPosition);
         }
     }
 
@@ -89,7 +103,9 @@ public class ImageTrackingManager : MonoBehaviour
     {
         if (spawnedTextObjects.ContainsKey(imageName))
         {
-            spawnedTextObjects[imageName].SetActive(isVisible);
+            (GameObject titleText, GameObject descriptionText) = spawnedTextObjects[imageName];
+            titleText.SetActive(isVisible);
+            descriptionText.SetActive(isVisible);
         }
     }
 
@@ -98,7 +114,10 @@ public class ImageTrackingManager : MonoBehaviour
     {
         if (spawnedTextObjects.ContainsKey(trackedImage.referenceImage.name))
         {
-            Destroy(spawnedTextObjects[trackedImage.referenceImage.name]);
+            (GameObject titleText, GameObject descriptionText) = spawnedTextObjects[trackedImage.referenceImage.name];
+
+            Destroy(titleText);
+            Destroy(descriptionText);
             spawnedTextObjects.Remove(trackedImage.referenceImage.name);
         }
     }
@@ -108,9 +127,9 @@ public class ImageTrackingManager : MonoBehaviour
     {
         switch (imageName)
         {
-            case "Desk": return "This is the introduction of Desk";
-            case "Sofa": return "This is the introduction of Sofa";
-            default: return "Unknown PIC";
+            case "Desk": return "This is a beautiful desk, perfect for study and work.";
+            case "Sofa": return "A comfortable sofa for relaxing and enjoying free time.";
+            default: return "No description available.";
         }
     }
 }
