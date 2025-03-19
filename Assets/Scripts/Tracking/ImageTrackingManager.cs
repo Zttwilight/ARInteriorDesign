@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
-using TMPro; 
+using TMPro;
 using System.Collections.Generic;
+using UnityEngine.XR.ARSubsystems;
 
 public class ImageTrackingManager : MonoBehaviour
 {
@@ -30,7 +31,15 @@ public class ImageTrackingManager : MonoBehaviour
 
         foreach (var trackedImage in eventArgs.updated)
         {
-            UpdateTextPosition(trackedImage);
+            if (trackedImage.trackingState == TrackingState.Tracking)
+            {
+                UpdateTextPosition(trackedImage);
+                SetTextVisibility(trackedImage.referenceImage.name, true);
+            }
+            else
+            {
+                SetTextVisibility(trackedImage.referenceImage.name, false);
+            }
         }
 
         foreach (var trackedImage in eventArgs.removed)
@@ -39,7 +48,7 @@ public class ImageTrackingManager : MonoBehaviour
         }
     }
 
-    // 🌟 生成文字对象
+    // 生成文字对象（但默认隐藏）
     private void SpawnText(ARTrackedImage trackedImage)
     {
         if (!spawnedTextObjects.ContainsKey(trackedImage.referenceImage.name))
@@ -48,10 +57,11 @@ public class ImageTrackingManager : MonoBehaviour
             newText.GetComponent<TextMeshPro>().text = GetDescription(trackedImage.referenceImage.name);
             newText.transform.localScale = Vector3.one * 0.05f; // 调整字体大小
             spawnedTextObjects[trackedImage.referenceImage.name] = newText;
+            newText.SetActive(false); // 默认隐藏，直到图片被识别
         }
     }
 
-    //  更新文字位置，使其与摄像头保持固定距离
+    // 更新文字位置，使其与摄像头保持固定距离
     private void UpdateTextPosition(ARTrackedImage trackedImage)
     {
         if (spawnedTextObjects.ContainsKey(trackedImage.referenceImage.name))
@@ -70,12 +80,20 @@ public class ImageTrackingManager : MonoBehaviour
             textObject.transform.position = newPosition;
 
             // 让文字始终面向摄像头
-            textObject.transform.LookAt(cameraPosition);
-            textObject.transform.rotation = Quaternion.Euler(0, textObject.transform.rotation.eulerAngles.y + 180, 0);
+            textObject.transform.LookAt(2 * textObject.transform.position - cameraPosition);
         }
     }
 
-    //  移除丢失的图片上的文字
+    // 设置文字可见性
+    private void SetTextVisibility(string imageName, bool isVisible)
+    {
+        if (spawnedTextObjects.ContainsKey(imageName))
+        {
+            spawnedTextObjects[imageName].SetActive(isVisible);
+        }
+    }
+
+    // 移除丢失的图片上的文字
     private void RemoveText(ARTrackedImage trackedImage)
     {
         if (spawnedTextObjects.ContainsKey(trackedImage.referenceImage.name))
@@ -85,7 +103,7 @@ public class ImageTrackingManager : MonoBehaviour
         }
     }
 
-    //  不同图片对应的文字内容
+    // 获取不同图片的介绍内容
     private string GetDescription(string imageName)
     {
         switch (imageName)
