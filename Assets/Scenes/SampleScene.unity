@@ -747,7 +747,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1586600291}
   m_Direction: 0
   m_Value: 0
-  m_Size: 0.99999994
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1464,6 +1464,7 @@ GameObject:
   - component: {fileID: 420957995}
   - component: {fileID: 420957998}
   - component: {fileID: 420957997}
+  - component: {fileID: 420957999}
   m_Layer: 0
   m_Name: XR Origin
   m_TagString: Untagged
@@ -1561,6 +1562,18 @@ MonoBehaviour:
   _imageManager: {fileID: 420957997}
   titlePrefab: {fileID: 1349023658}
   descriptionPrefab: {fileID: 723068469}
+--- !u!114 &420957999
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 420957992}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad2d6247bdbe28e49a47203120231160, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &426181484
 GameObject:
   m_ObjectHideFlags: 0
@@ -3823,7 +3836,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1814787462}
   m_Direction: 2
   m_Value: 0.9999999
-  m_Size: 0.22251128
+  m_Size: 0.22251125
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
