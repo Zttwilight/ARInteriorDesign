@@ -20,11 +20,15 @@ public class ImageTrackingManager : MonoBehaviour
     void OnEnable()
     {
         _imageManager.trackedImagesChanged += OnTrackedImagesChanged;
+
+        GameManager.OnGlobalDestroySent += HandleDestroyReport;
     }
 
     void OnDisable()
     {
         _imageManager.trackedImagesChanged -= OnTrackedImagesChanged;
+
+        GameManager.OnGlobalDestroySent -= HandleDestroyReport;
     }
 
     private void OnTrackedImagesChanged(ARTrackedImagesChangedEventArgs eventArgs)
@@ -185,5 +189,12 @@ public class ImageTrackingManager : MonoBehaviour
             case "Sofa": return "A comfortable sofa for relaxing and enjoying free time.";
             default: return "No description available.";
         }
+    }
+
+    // 监听 GameManager 全局报告
+    private void HandleDestroyReport()
+    {
+        Debug.Log("ImageTrackingManager: 收到 GameManager 的全局报告！");
+        // 这里可以执行任何逻辑，例如刷新 UI、播放音效、触发事件等
     }
 }
