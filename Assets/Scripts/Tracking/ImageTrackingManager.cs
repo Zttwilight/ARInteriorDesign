@@ -37,31 +37,48 @@ public class ImageTrackingManager : MonoBehaviour
         }
 
         foreach (var trackedImage in eventArgs.updated)
+{
+    string imageName = trackedImage.referenceImage.name;
+
+    // 重新生成模型
+    if (trackedImage.trackingState == TrackingState.Tracking)
+    {
+        // 如果之前模型被销毁，现在重新生成
+        if (IsModelTarget(imageName) && !spawnedModelObjects.ContainsKey(imageName))
         {
-            string imageName = trackedImage.referenceImage.name;
-
-            if (trackedImage.trackingState == TrackingState.Tracking)
+            GameObject modelPrefab = LoadModelFromResources(imageName);
+            if (modelPrefab != null)
             {
-                UpdateTextPosition(trackedImage);
+                GameObject modelInstance = Instantiate(modelPrefab);
+                modelInstance.transform.position = trackedImage.transform.position + new Vector3(0, modelHeightOffset, 0);
+                modelInstance.transform.localScale = Vector3.one * 0.2f;
+                modelInstance.transform.rotation = Quaternion.identity;
 
-                if (spawnedTextObjects.ContainsKey(imageName))
-                {
-                    (GameObject title, GameObject desc) = spawnedTextObjects[imageName];
-                    title.SetActive(true);
-                    desc.SetActive(true);
-                }
-            }
-            else
-            {
-                // 图像不在追踪状态，隐藏文字但保留模型
-                if (spawnedTextObjects.ContainsKey(imageName))
-                {
-                    (GameObject title, GameObject desc) = spawnedTextObjects[imageName];
-                    title.SetActive(false);
-                    desc.SetActive(false);
-                }
+                spawnedModelObjects[imageName] = modelInstance;
             }
         }
+
+        // 正常更新文字位置和显示
+        UpdateTextPosition(trackedImage);
+
+        if (spawnedTextObjects.ContainsKey(imageName))
+        {
+            (GameObject title, GameObject desc) = spawnedTextObjects[imageName];
+            title.SetActive(true);
+            desc.SetActive(true);
+        }
+    }
+    else
+    {
+        if (spawnedTextObjects.ContainsKey(imageName))
+        {
+            (GameObject title, GameObject desc) = spawnedTextObjects[imageName];
+            title.SetActive(false);
+            desc.SetActive(false);
+        }
+    }
+}
+
 
         foreach (var trackedImage in eventArgs.removed)
         {
