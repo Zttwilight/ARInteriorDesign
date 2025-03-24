@@ -30,73 +30,97 @@ public class ImageTrackingManager : MonoBehaviour
     }
 
     private void OnTrackedImagesChanged(ARTrackedImagesChangedEventArgs eventArgs)
+{
+    foreach (var trackedImage in eventArgs.added)
     {
-        foreach (var trackedImage in eventArgs.added)
-        {
-            SpawnObject(trackedImage);
-        }
+        SpawnObject(trackedImage);
+    }
 
-        foreach (var trackedImage in eventArgs.updated)
-        {
-            string imageName = trackedImage.referenceImage.name;
+    foreach (var trackedImage in eventArgs.updated)
+    {
+        string imageName = trackedImage.referenceImage.name;
 
-            // 重新生成模型
-            if (trackedImage.trackingState == TrackingState.Tracking)
+        if (trackedImage.trackingState == TrackingState.Tracking)
+        {
+            // ===== 创建模型 =====
+            if (IsModelTarget(imageName))
             {
-                // 如果之前模型被销毁，现在重新生成
-                if (IsModelTarget(imageName) && !spawnedModelObjects.ContainsKey(imageName))
-                //if (IsModelTarget(imageName))
+                if (!spawnedModelObjects.ContainsKey(imageName))
                 {
                     GameObject modelPrefab = LoadModelFromResources(imageName);
                     if (modelPrefab != null)
                     {
                         GameObject modelInstance = Instantiate(modelPrefab);
-                        modelInstance.transform.position = trackedImage.transform.position + new Vector3(0, modelHeightOffset, 0);
                         modelInstance.transform.localScale = Vector3.one * 0.2f;
-                        modelInstance.transform.rotation = Quaternion.identity;
-
                         spawnedModelObjects[imageName] = modelInstance;
-                       
                     }
-                    
                 }
 
-                // 正常更新文字位置和显示
-                UpdateTextPosition(trackedImage);
-
-                if (spawnedTextObjects.ContainsKey(imageName))
+                if (spawnedModelObjects.ContainsKey(imageName))
                 {
-                    (GameObject title, GameObject desc) = spawnedTextObjects[imageName];
-                    title.SetActive(true);
-                    desc.SetActive(true);
+                    GameObject model = spawnedModelObjects[imageName];
+                    model.SetActive(true);
+                    model.transform.position = trackedImage.transform.position + new Vector3(0, modelHeightOffset, 0);
+                    model.transform.rotation = Quaternion.identity;
                 }
             }
-            else
-            {
-                if (spawnedTextObjects.ContainsKey(imageName))
-                {
-                    (GameObject title, GameObject desc) = spawnedTextObjects[imageName];
-                    title.SetActive(false);
-                    desc.SetActive(false);
-                }
-            }
-        }
 
+            // ===== 文字 =====
+            UpdateTextPosition(trackedImage);
 
-        foreach (var trackedImage in eventArgs.removed)
-        {
-            string imageName = trackedImage.referenceImage.name;
-
-            // 只移除文字，不移除模型
             if (spawnedTextObjects.ContainsKey(imageName))
             {
-                (GameObject titleText, GameObject descriptionText) = spawnedTextObjects[imageName];
-                Destroy(titleText);
-                Destroy(descriptionText);
-                spawnedTextObjects.Remove(imageName);
+                (GameObject title, GameObject desc) = spawnedTextObjects[imageName];
+                title.SetActive(true);
+                desc.SetActive(true);
+            }
+        }
+        else // Not Tracking => 销毁模型和文字
+        {
+            // 销毁模型
+            if (spawnedModelObjects.ContainsKey(imageName))
+            {
+                Destroy(spawnedModelObjects[imageName]);
+                spawnedModelObjects.Remove(imageName);
+            }
+
+            // 销毁文字
+            if (spawnedTextObjects.ContainsKey(imageName))
+            {
+                (GameObject title, GameObject desc) = spawnedTextObjects[imageName];
+                // Destroy(title);
+                // Destroy(desc);
+                title.SetActive(false);
+                desc.SetActive(false);
+                //spawnedTextObjects.Remove(imageName);
             }
         }
     }
+
+    foreach (var trackedImage in eventArgs.removed)
+    {
+        string imageName = trackedImage.referenceImage.name;
+
+        // 销毁模型
+        if (spawnedModelObjects.ContainsKey(imageName))
+        {
+            Destroy(spawnedModelObjects[imageName]);
+            spawnedModelObjects.Remove(imageName);
+        }
+
+        // 销毁文字
+        if (spawnedTextObjects.ContainsKey(imageName))
+        {
+            (GameObject titleText, GameObject descriptionText) = spawnedTextObjects[imageName];
+            // Destroy(titleText);
+            // Destroy(descriptionText);
+            titleText.SetActive(false);
+            descriptionText.SetActive(false);
+            spawnedTextObjects.Remove(imageName);
+        }
+    }
+}
+
 
     private void SpawnObject(ARTrackedImage trackedImage)
     {
