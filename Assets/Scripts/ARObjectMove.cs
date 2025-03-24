@@ -1,53 +1,3 @@
-/*using UnityEngine;
-using UnityEngine.XR.ARFoundation;
-using UnityEngine.XR.ARSubsystems;
-
-public class ARObjectMove : MonoBehaviour
-{
-    private ARRaycastManager raycastManager;
-    private Vector2 touchPosition;
-    private GameObject selectedObject;
-    private Camera arCamera;
-
-    void Start()
-    {
-        raycastManager = FindObjectOfType<ARRaycastManager>();
-        arCamera = Camera.main;
-    }
-
-    void Update()
-    {
-        // 检测单指触摸输入
-        if (Input.touchCount == 1)
-        {
-            touchPosition = Input.GetTouch(0).position;
-            Ray ray = arCamera.ScreenPointToRay(touchPosition);
-            RaycastHit hit;
-
-            // 检测射线是否击中物体
-            if (Physics.Raycast(ray, out hit))
-            {
-                if (hit.transform.CompareTag("Furniture")) // 确保是可以移动的物体
-                {
-                    if (selectedObject == null)
-                    {
-                        selectedObject = hit.transform.gameObject;
-                    }
-
-                    // 将物体移动到触摸位置
-                    Vector3 worldPosition = hit.point;
-                    selectedObject.transform.position = new Vector3(worldPosition.x, selectedObject.transform.position.y, worldPosition.z);
-                }
-            }
-        }
-        else
-        {
-            selectedObject = null;
-        }
-    }
-}
-*/
-
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
@@ -60,6 +10,9 @@ public class ARObjectMove : MonoBehaviour
     private GameObject selectedObject;
     private Camera arCamera;
     private bool isDragging = false;
+    private Vector3 offset;
+    private Vector3 initialTouchPosition;
+    private Vector3 initialObjectPosition;
 
     void Start()
     {
@@ -88,6 +41,12 @@ public class ARObjectMove : MonoBehaviour
                 selectedObject = null;
             }
         }
+
+        // Handle two-finger gesture (scale)
+        if (Input.touchCount == 2)
+        {
+            HandleTwoFingerGesture();
+        }
     }
 
     // 选中可拖动的家具
@@ -102,6 +61,17 @@ public class ARObjectMove : MonoBehaviour
             {
                 selectedObject = hit.transform.gameObject;
                 isDragging = true;
+
+                // 计算物体与触摸点之间的偏移
+                Vector3 objectPosition = selectedObject.transform.position;
+                Vector3 worldTouchPosition = hit.point;
+                offset = objectPosition - worldTouchPosition;
+
+                initialTouchPosition = touchPosition;
+                initialObjectPosition = selectedObject.transform.position;
+
+                // Debugging: output offset values
+                Debug.Log($"Offset: {offset}");
             }
         }
     }
@@ -115,7 +85,37 @@ public class ARObjectMove : MonoBehaviour
         if (raycastManager.Raycast(screenPosition, hits, TrackableType.Planes))
         {
             Pose hitPose = hits[0].pose;
-            selectedObject.transform.position = hitPose.position;
+
+            // 物体移动到触摸点，并保持与触摸点的偏移
+            Vector3 newPosition = hitPose.position + offset;
+
+            // 物体只移动在平面上，确保y轴固定
+            selectedObject.transform.position = new Vector3(newPosition.x, initialObjectPosition.y, newPosition.z);
+
+            // Debugging: output new position values
+            Debug.Log($"New Position: {selectedObject.transform.position}");
+        }
+    }
+
+    // 处理双指缩放手势
+    private void HandleTwoFingerGesture()
+    {
+        Touch touch1 = Input.GetTouch(0);
+        Touch touch2 = Input.GetTouch(1);
+
+        // 获取两指的距离变化
+        float previousDistance = (touch1.position - touch2.position).magnitude;
+        float currentDistance = (touch1.position - touch2.position).magnitude;
+
+        // 比较两次的距离，计算出缩放因子
+        float scaleFactor = currentDistance / previousDistance;
+
+        // 缩放物体
+        if (selectedObject != null)
+        {
+            Vector3 scale = selectedObject.transform.localScale;
+            scale *= scaleFactor;
+            selectedObject.transform.localScale = scale;
         }
     }
 }

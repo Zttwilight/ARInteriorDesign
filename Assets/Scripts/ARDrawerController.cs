@@ -59,8 +59,8 @@ public class ARDrawerController : MonoBehaviour
 
     void PlayDrawerAnimations()
     {
-        drawer1.Play("NewAnimation", 0, 0);
-        drawer2.Play("NewState0", 0, 0);
-        drawer3.Play("3NewAnimation", 0, 0);
+        drawer1.Play("NewState0", 0, 0);
+        drawer2.Play("3NewAnimation", 0, 0);
+        drawer3.Play("NewAnimation", 0, 0);
     }
 }
