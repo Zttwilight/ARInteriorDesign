@@ -1,43 +1,39 @@
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.UI;
+using TMPro;
 
 public class LightEstimationController : MonoBehaviour
 {
     [SerializeField] private ARCameraManager _arCameraManager;
-    [SerializeField] private Light _directionalLight;
-    [SerializeField] private Image _imageLighting; // 用于显示光照估计颜色
+    [SerializeField] private Light _directionalLight; // 用于影响3D场景的光
+    [SerializeField] private Image _colorBar; // UI 颜色条
+    [SerializeField] private TMP_Text _debugText; // 调试信息
 
-    private void OnEnable()
-    {
-        _arCameraManager.frameReceived += OnFrameReceived;
-    }
-
-    private void OnDisable()
-    {
-        _arCameraManager.frameReceived -= OnFrameReceived;
-    }
+    private void OnEnable() => _arCameraManager.frameReceived += OnFrameReceived;
+    private void OnDisable() => _arCameraManager.frameReceived -= OnFrameReceived;
 
     private void OnFrameReceived(ARCameraFrameEventArgs args)
     {
-        // 读取光照估计数据
-        if (args.lightEstimation.averageBrightness.HasValue)
+        float? brightness = args.lightEstimation.averageBrightness;
+        float? temperature = args.lightEstimation.averageColorTemperature;
+        Color? color = args.lightEstimation.colorCorrection;
+
+        if (brightness.HasValue)
         {
-            _directionalLight.intensity = args.lightEstimation.averageBrightness.Value;
+            float brightnessNormalized = Mathf.Clamp01(brightness.Value / 2f); // 归一化到 0~1
+            _colorBar.color = Color.Lerp(Color.black, Color.white, brightnessNormalized); // 由暗到亮
         }
 
-        if (args.lightEstimation.averageColorTemperature.HasValue)
+
+        if (color.HasValue) // 使用 colorCorrection 让颜色变化更明显
         {
-            _directionalLight.colorTemperature = args.lightEstimation.averageColorTemperature.Value;
+            _directionalLight.color = color.Value;
+            _colorBar.color = new Color(color.Value.r, color.Value.g, color.Value.b, 1f);
         }
 
-        if (args.lightEstimation.colorCorrection.HasValue)
-        {
-            _directionalLight.color = args.lightEstimation.colorCorrection.Value;
-            if (_imageLighting != null)
-            {
-                _imageLighting.color = args.lightEstimation.colorCorrection.Value;
-            }
-        }
+        _debugText.text = $"Brightness: {brightness?.ToString("F2") ?? "none"}\n" +
+                          $"Color: {color?.ToString() ?? "none"}";
     }
+
 }
