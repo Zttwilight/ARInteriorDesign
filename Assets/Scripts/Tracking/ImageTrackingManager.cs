@@ -48,6 +48,7 @@ public class ImageTrackingManager : MonoBehaviour
 
         foreach (var trackedImage in eventArgs.updated)
         {
+            SpawnObject(trackedImage);
             string imageName = trackedImage.referenceImage.name;
 
             if (trackedImage.trackingState == TrackingState.Tracking)
