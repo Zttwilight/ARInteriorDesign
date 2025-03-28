@@ -37,8 +37,8 @@ RenderSettings:
   m_ReflectionBounces: 1
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
-  m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
+  m_Sun: {fileID: 1440149839}
+  m_IndirectSpecularColor: {r: 0.37311926, g: 0.38073996, b: 0.35872698, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1867,6 +1867,7 @@ GameObject:
   - component: {fileID: 420957998}
   - component: {fileID: 420957997}
   - component: {fileID: 420957999}
+  - component: {fileID: 420958000}
   m_Layer: 0
   m_Name: XR Origin
   m_TagString: Untagged
@@ -1976,6 +1977,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad2d6247bdbe28e49a47203120231160, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &420958000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 420957992}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31ea8d2adef80a0418975ec77671e635, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  carPrefab: {fileID: 3633786088095158143, guid: 689fbc83c77623a4eb2cfc89e40a695d, type: 3}
+  speed: 100
+  turnSpeed: 100
 --- !u!1 &426181484
 GameObject:
   m_ObjectHideFlags: 0
@@ -3845,8 +3861,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 3
+  m_fontSizeBase: 3
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -4586,7 +4602,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1814787462}
   m_Direction: 2
   m_Value: 0.99999994
-  m_Size: 0.2052406
+  m_Size: 0.20524059
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -7518,8 +7534,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 3.4
+  m_fontSizeBase: 3.4
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
