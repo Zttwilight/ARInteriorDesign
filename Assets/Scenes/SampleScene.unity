@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 1440149839}
-  m_IndirectSpecularColor: {r: 0.37311926, g: 0.38073996, b: 0.35872698, a: 1}
+  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1867,7 +1867,6 @@ GameObject:
   - component: {fileID: 420957998}
   - component: {fileID: 420957997}
   - component: {fileID: 420957999}
-  - component: {fileID: 420958000}
   m_Layer: 0
   m_Name: XR Origin
   m_TagString: Untagged
@@ -1949,7 +1948,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_SerializedLibrary: {fileID: 11400000, guid: 99d5aef514751774ea4966f160bc6e10, type: 2}
   m_MaxNumberOfMovingImages: 0
-  m_TrackedImagePrefab: {fileID: 0}
+  m_TrackedImagePrefab: {fileID: 1601584727}
 --- !u!114 &420957998
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1965,6 +1964,9 @@ MonoBehaviour:
   _imageManager: {fileID: 420957997}
   titlePrefab: {fileID: 1349023658}
   descriptionPrefab: {fileID: 723068469}
+  carPrefab: {fileID: 919132149155446097, guid: f3226b4812c1d314eb2d992d7eb8c800, type: 3}
+  speed: 5
+  turnSpeed: 100
 --- !u!114 &420957999
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1977,21 +1979,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad2d6247bdbe28e49a47203120231160, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &420958000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 420957992}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 31ea8d2adef80a0418975ec77671e635, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  carPrefab: {fileID: 3633786088095158143, guid: 689fbc83c77623a4eb2cfc89e40a695d, type: 3}
-  speed: 100
-  turnSpeed: 100
 --- !u!1 &426181484
 GameObject:
   m_ObjectHideFlags: 0
@@ -3897,7 +3884,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_margin: {x: 8.212868, y: -1.6125293, z: 8.438597, w: 4.6236796}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   _SortingLayer: 0
@@ -4602,7 +4589,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1814787462}
   m_Direction: 2
   m_Value: 0.99999994
-  m_Size: 0.20524059
+  m_Size: 0.20524062
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -7570,7 +7557,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_margin: {x: 8.860967, y: 1.7801524, z: 8.440769, w: 2.6566157}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   _SortingLayer: 0
