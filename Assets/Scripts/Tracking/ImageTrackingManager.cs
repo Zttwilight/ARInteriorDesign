@@ -48,7 +48,7 @@ public class ImageTrackingManager : MonoBehaviour
 
         foreach (var trackedImage in eventArgs.updated)
         {
-            SpawnObject(trackedImage);
+            //SpawnObject(trackedImage);
             string imageName = trackedImage.referenceImage.name;
 
             if (trackedImage.trackingState == TrackingState.Tracking)
@@ -89,7 +89,13 @@ public class ImageTrackingManager : MonoBehaviour
                 }
                 else if (IsAnimationTarget(imageName))
                 {
-                    carInstance.SetActive(true);
+                    if(carInstance!=null){
+                        carInstance.SetActive(true);
+                    }else{
+                        SpawnObject(trackedImage);
+                        carInstance.SetActive(true);
+                    }
+                    
                 }
 
             }
