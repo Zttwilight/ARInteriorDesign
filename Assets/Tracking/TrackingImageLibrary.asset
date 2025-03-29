@@ -37,7 +37,7 @@ MonoBehaviour:
       m_GuidHigh: 1618150670662326986
     m_Size: {x: 0.1, y: 0.079427086}
     m_SpecifySize: 1
-    m_Name: A Wheatfield, with Cypresses
+    m_Name: Wheatfield
     m_Texture: {fileID: 0}
   - m_SerializedGuid:
       m_GuidLow: 5056763816388274009
