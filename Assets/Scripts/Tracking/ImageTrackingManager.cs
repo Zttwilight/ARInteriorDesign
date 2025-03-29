@@ -249,7 +249,7 @@ public class ImageTrackingManager : MonoBehaviour
 
     private bool IsTextTarget(String imageName)
     {
-        return imageName == "Desk" || imageName == "Sofa" || imageName == "painting1";
+        return imageName == "Desk" || imageName == "Sofa" || imageName == "A Wheatfield, with Cypresses";
     }
 
     private GameObject LoadModelFromResources(string imageName)
@@ -264,6 +264,7 @@ public class ImageTrackingManager : MonoBehaviour
             case "Desk": return "This is a beautiful desk, perfect for study and work.";
             case "Sofa": return "A comfortable sofa for relaxing and enjoying free time.";
             case "Painting1": return "A painting1. Buautiful.";
+            case "A Wheatfield, with Cypresses": return "Van Gogh painted A Wheatfield, with Cypresses during the summer of 1889.\n\nThe landscape includes typically Provençal motifs such as a golden wheat field, tall evergreen cypresses, an olive bush and a backdrop of the blue Alpilles mountains.Everything is depicted with powerful rhythmic lines and swirling brushstrokes that convey Van Gogh’s sense of nature’s vitality.";
             default: return "No description available.";
         }
     }
