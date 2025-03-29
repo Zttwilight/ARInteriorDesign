@@ -55,49 +55,75 @@ public class ImageTrackingManager1 : MonoBehaviour
         {
             string imageName = trackedImage.referenceImage.name;
 
-            if (trackedImage.trackingState == TrackingState.Tracking)
+           if (trackedImage.trackingState == TrackingState.Tracking)
+        {
+            if (imageName == "Wheatfield")
             {
-                if (imageName == "Wheatfield")
+                    if (spawnedImageObjects.ContainsKey(imageName))
                 {
-                    // 显示虚拟图片
-                    if (!spawnedImageObjects.ContainsKey(imageName))
-                    {
-                        GameObject virtualImageObject = new GameObject("WheatfieldImage");
-                        RawImage rawImage = virtualImageObject.AddComponent<RawImage>(); // 使用 RawImage 控件
-                        rawImage.texture = wheatfieldSprite.texture; // 将虚拟图片纹理分配给 RawImage
-                        virtualImageObject.transform.SetParent(arCanvas.transform, false); // 将图片添加到 Canvas 上
-                        virtualImageObject.GetComponent<RectTransform>().sizeDelta = new Vector2(300, 300); // 设置图片大小
-                        virtualImageObject.transform.position = trackedImage.transform.position + new Vector3(0, 0.1f, 0); // 设置位置
-                        spawnedImageObjects[imageName] = virtualImageObject;
-                    }
-                    else
-                    {
-                        spawnedImageObjects[imageName].SetActive(true);
-                    }
+                    GameObject canvasObject = spawnedImageObjects[imageName];
+                    canvasObject.SetActive(true); // 激活Canvas对象
+
+                    // 更新Canvas的位置和旋转，使其跟随图像
+                    canvasObject.transform.position = trackedImage.transform.position + new Vector3(0, 0.1f, 0);
+                    // 设置虚拟图片的旋转，比真实图片的 X 轴旋转值多 90 度
+                    Quaternion adjustedRotation = Quaternion.Euler(
+                        trackedImage.transform.rotation.eulerAngles.x + 90, // X轴旋转加90度
+                        0,      // 保持Y轴旋转
+                        0       // 保持Z轴旋转
+                    );
+                    canvasObject.transform.rotation = adjustedRotation;
+                    
                 }
+                
+            }
                 else
                 {
                     // 处理其他物体（模型、动画等）
-                    if (IsModelTarget(imageName))
+                    // ===== 创建模型 =====
+                if (IsModelTarget(imageName))
+                {
+                    if (!spawnedModelObjects.ContainsKey(imageName))
                     {
-                        if (!spawnedModelObjects.ContainsKey(imageName))
+                        GameObject modelPrefab = LoadModelFromResources(imageName);
+                        if (modelPrefab != null)
                         {
-                            GameObject modelPrefab = LoadModelFromResources(imageName);
-                            if (modelPrefab != null)
-                            {
-                                GameObject modelInstance = Instantiate(modelPrefab);
-                                modelInstance.transform.localScale = Vector3.one * 0.2f;
-                                spawnedModelObjects[imageName] = modelInstance;
-                            }
-                        }
-                        if (spawnedModelObjects.ContainsKey(imageName))
-                        {
-                            GameObject model = spawnedModelObjects[imageName];
-                            model.SetActive(true);
-                            model.transform.position = trackedImage.transform.position + new Vector3(0, modelHeightOffset, 0);
-                            model.transform.rotation = Quaternion.identity;
+                            GameObject modelInstance = Instantiate(modelPrefab);
+                            modelInstance.transform.localScale = Vector3.one * 0.2f;
+                            spawnedModelObjects[imageName] = modelInstance;
                         }
                     }
+
+                    if (spawnedModelObjects.ContainsKey(imageName))
+                    {
+                        GameObject model = spawnedModelObjects[imageName];
+                        model.SetActive(true);
+                        model.transform.position = trackedImage.transform.position + new Vector3(0, modelHeightOffset, 0);
+                        model.transform.rotation = Quaternion.identity;
+                    }
+                }
+                else if (IsTextTarget(imageName))
+                {
+                    // ===== 文字 =====
+                    UpdateTextPosition(trackedImage);
+
+                    if (spawnedTextObjects.ContainsKey(imageName))
+                    {
+                        (GameObject title, GameObject desc) = spawnedTextObjects[imageName];
+                        title.SetActive(true);
+                        desc.SetActive(true);
+                    }
+                }
+                else if (IsAnimationTarget(imageName))
+                {
+                    if(carInstance!=null){
+                        carInstance.SetActive(true);
+                    }else{
+                        SpawnObject(trackedImage);
+                        carInstance.SetActive(true);
+                    }
+                    
+                }
                 }
             }
             else
@@ -109,18 +135,27 @@ public class ImageTrackingManager1 : MonoBehaviour
                 }
                 else
                 {
-                    // 处理其他模型和动画清理
-                    if (spawnedModelObjects.ContainsKey(imageName))
-                    {
-                        Destroy(spawnedModelObjects[imageName]);
-                        spawnedModelObjects.Remove(imageName);
-                    }
-                    if (spawnedTextObjects.ContainsKey(imageName))
-                    {
-                        (GameObject title, GameObject desc) = spawnedTextObjects[imageName];
-                        title.SetActive(false);
-                        desc.SetActive(false);
-                    }
+                    // 销毁模型
+                if (spawnedModelObjects.ContainsKey(imageName))
+                {
+                    Destroy(spawnedModelObjects[imageName]);
+                    spawnedModelObjects.Remove(imageName);
+                }
+
+                // 销毁文字
+                if (spawnedTextObjects.ContainsKey(imageName))
+                {
+                    (GameObject title, GameObject desc) = spawnedTextObjects[imageName];
+                    title.SetActive(false);
+                    desc.SetActive(false);
+                }
+
+                //销毁动画
+                if (IsAnimationTarget(imageName) && carInstance != null)
+                {
+                    Destroy(carInstance);
+                    carInstance=null;
+                }
                 }
             }
         }
@@ -136,18 +171,23 @@ public class ImageTrackingManager1 : MonoBehaviour
             }
             else
             {
-                if (spawnedModelObjects.ContainsKey(imageName))
-                {
-                    Destroy(spawnedModelObjects[imageName]);
-                    spawnedModelObjects.Remove(imageName);
-                }
-                if (spawnedTextObjects.ContainsKey(imageName))
-                {
-                    (GameObject titleText, GameObject descriptionText) = spawnedTextObjects[imageName];
-                    titleText.SetActive(false);
-                    descriptionText.SetActive(false);
-                    spawnedTextObjects.Remove(imageName);
-                }
+                // 销毁模型
+            if (spawnedModelObjects.ContainsKey(imageName))
+            {
+                Destroy(spawnedModelObjects[imageName]);
+                spawnedModelObjects.Remove(imageName);
+            }
+
+            // 销毁文字
+            if (spawnedTextObjects.ContainsKey(imageName))
+            {
+                (GameObject titleText, GameObject descriptionText) = spawnedTextObjects[imageName];
+                // Destroy(titleText);
+                // Destroy(descriptionText);
+                titleText.SetActive(false);
+                descriptionText.SetActive(false);
+                spawnedTextObjects.Remove(imageName);
+            }
             }
         }
     }
@@ -165,7 +205,7 @@ public class ImageTrackingManager1 : MonoBehaviour
                 RawImage rawImage = virtualImageObject.AddComponent<RawImage>(); // 使用 RawImage 控件
                 rawImage.texture = wheatfieldSprite.texture; // 将虚拟图片纹理分配给 RawImage
                 virtualImageObject.transform.SetParent(arCanvas.transform, false); // 将图片添加到 Canvas 上
-                virtualImageObject.GetComponent<RectTransform>().sizeDelta = new Vector2(300, 300); // 设置图片大小
+                virtualImageObject.GetComponent<RectTransform>().sizeDelta = new Vector2(167, 317); // 设置图片大小
                 virtualImageObject.transform.position = trackedImage.transform.position + new Vector3(0, 0.1f, 0); // 设置位置
                 spawnedImageObjects[imageName] = virtualImageObject;
             }
@@ -199,23 +239,55 @@ public class ImageTrackingManager1 : MonoBehaviour
 
                 spawnedTextObjects[imageName] = (titleText, descriptionText);
 
-                // Initial state hidden
+                // 初始状态隐藏
                 titleText.SetActive(false);
                 descriptionText.SetActive(false);
             }
         }
-        else if (IsAnimationTarget(imageName)) // Handle animations
+        else if (IsAnimationTarget(imageName))//是动画
         {
+            //
             if (carInstance == null)
             {
                 carInstance = Instantiate(carPrefab);
+                //carInstance.transform.position = trackedImage.transform.position + new Vector3(0, carHeightOffset, 0);
+
                 carInstance.transform.position = trackedImage.transform.position + new Vector3(0, carHeightOffset, 0);
             }
             else
             {
+                // 如果小车已经存在，更新它的位置
                 carInstance.transform.position = trackedImage.transform.position + new Vector3(0, carHeightOffset, 0);
+
             }
+
             carInstance.SetActive(false);
+        }
+    }
+    private void UpdateTextPosition(ARTrackedImage trackedImage)
+    {
+        string imageName = trackedImage.referenceImage.name;
+
+        if (spawnedTextObjects.ContainsKey(imageName))
+        {
+            (GameObject titleText, GameObject descriptionText) = spawnedTextObjects[imageName];
+
+            Vector3 cameraPosition = Camera.main.transform.position;
+            Vector3 directionToCamera = (trackedImage.transform.position - cameraPosition).normalized;
+            Vector3 basePosition = trackedImage.transform.position;
+
+            titleText.transform.position = basePosition + new Vector3(0, 0.05f, 0);
+            descriptionText.transform.position = basePosition - new Vector3(0, 0.05f, 0);
+
+            titleText.transform.rotation = Quaternion.LookRotation(directionToCamera);
+            descriptionText.transform.rotation = Quaternion.LookRotation(directionToCamera);
+        }
+
+        if (spawnedModelObjects.ContainsKey(imageName))
+        {
+            GameObject model = spawnedModelObjects[imageName];
+            model.transform.position = trackedImage.transform.position + new Vector3(0, modelHeightOffset, 0);
+            model.transform.rotation = Quaternion.identity;
         }
     }
 
@@ -250,6 +322,94 @@ public class ImageTrackingManager1 : MonoBehaviour
         }
     }
 
+    Vector2 startTouchPosition;
+    Vector2 endTouchPosition;
+    bool isSwiping = false;
+
+    void Update()
+{
+    HandleTouchInput(); // 处理触控滑动
+    AnimationMove();    // 控制小车移动
+}
+
+Vector2 swipeDelta;
+float moveInput = 0f;
+float turnInput = 0f;
+
+void HandleTouchInput()
+{
+    moveInput = 0f;
+    turnInput = 0f;
+
+    if (Input.touchCount > 0)
+    {
+        Touch touch = Input.GetTouch(0);
+
+        switch (touch.phase)
+        {
+            case TouchPhase.Began:
+                startTouchPosition = touch.position;
+                isSwiping = true;
+                break;
+
+            case TouchPhase.Moved:
+                endTouchPosition = touch.position;
+                swipeDelta = endTouchPosition - startTouchPosition;
+
+                // 计算水平/垂直方向
+                if (Mathf.Abs(swipeDelta.y) > Mathf.Abs(swipeDelta.x))
+                {
+                    // 垂直滑动：前进或后退
+                    moveInput = swipeDelta.y > 0 ? 1f : -1f;
+                }
+                else
+                {
+                    // 水平滑动：转向
+                    turnInput = swipeDelta.x > 0 ? 1f : -1f;
+                }
+                break;
+
+            case TouchPhase.Ended:
+            case TouchPhase.Canceled:
+                isSwiping = false;
+                swipeDelta = Vector2.zero;
+                break;
+        }
+    }
+}
+    
+    void AnimationMove()
+{
+    if (carInstance != null)
+    {
+        carInstance.transform.Translate(Vector3.forward * moveInput * speed * Time.deltaTime);
+        carInstance.transform.Rotate(Vector3.up * turnInput * turnSpeed * Time.deltaTime);
+
+        RotateWheels();
+    }
+}
+
+
+    void RotateWheels()
+    {
+        Transform frontLeftWheel = carInstance.transform.Find("Cylinder");
+        Transform frontRightWheel = carInstance.transform.Find("Cylinder:005");
+        Transform backLeftWheel = carInstance.transform.Find("Cylinder:006");
+        Transform backRightWheel = carInstance.transform.Find("Cylinder:007");
+
+        // 确保找到车轮物体，并进行旋转
+        if (frontLeftWheel != null && frontRightWheel != null && backLeftWheel != null && backRightWheel != null)
+        {
+            // 让四个车轮旋转
+            frontLeftWheel.Rotate(Vector3.right * speed * Time.deltaTime);
+            frontRightWheel.Rotate(Vector3.right * speed * Time.deltaTime);
+            backLeftWheel.Rotate(Vector3.right * speed * Time.deltaTime);
+            backRightWheel.Rotate(Vector3.right * speed * Time.deltaTime);
+        }
+    }
+
+
+
     private void HandleDestroyReport()
     {
         Debug.Log("ImageTrackingManager: 收到 GameManager 的全局报告！");
@@ -267,4 +427,7 @@ public class ImageTrackingManager1 : MonoBehaviour
 
         spawnedImageObjects.Clear();
     }
+
+
+    
 }
